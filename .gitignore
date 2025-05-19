@@ -1,1 +1,5 @@
 .vscode
+core/FCFS.c
+core/output
+a.exe
+tokens.txt
