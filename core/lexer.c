@@ -6,6 +6,8 @@
 #define MAX_TOKEN_SIZE 100
 #define MAX_TOKENS 1000
 
+
+
 // Token structure
 typedef struct
 {
@@ -74,13 +76,13 @@ void addToken(const char *type, const char *value)
 }
 
 // Lexer Logic
-void analyze(const char *filename)
+int analyze(const char *filename)
 {
   FILE *fp = fopen(filename, "r");
   if (!fp)
   {
     printf("Error: Could not open file %s\n", filename);
-    return;
+    return 0;
   }
 
   char ch, word[MAX_TOKEN_SIZE];
@@ -249,6 +251,7 @@ void analyze(const char *filename)
   }
 
   fclose(fp);
+  return 1;
 }
 
 // Output tokens to console and file
@@ -273,15 +276,34 @@ void printTokens(const char *outFile)
 }
 
 // Main Function
-int main()
-{
-  char filename[100];
-  printf("Enter your source code file (e.g. test.c): ");
-  scanf("%s", filename);
 
-  analyze(filename);
-  printTokens("tokens.txt");
+int main() {
+    char filename[300];
 
-  printf("\nTokens saved in tokens.txt\n");
-  return 0;
+    printf("Enter full path to source code file (use quotes if it contains spaces):\n> ");
+    fgets(filename, sizeof(filename), stdin);
+
+    // Remove trailing newline
+    filename[strcspn(filename, "\n")] = '\0';
+
+    // If input starts and ends with quotes, remove both
+    int len = strlen(filename);
+    if (filename[0] == '"' && filename[len - 1] == '"') {
+        // Shift left by 1 and set null terminator at new end
+        memmove(filename, filename + 1, len - 2);
+        filename[len - 2] = '\0';  // not -1!
+    }
+
+    // Debug print
+    printf("Opening file: %s\n", filename);
+
+    if (!analyze(filename)) {
+        printf("Error: Could not open file %s\n", filename);
+        return 1;
+    }
+
+    printTokens("tokens.txt");
+
+    printf("\nTokens saved in tokens.txt\n");
+    return 0;
 }
