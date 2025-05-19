@@ -1,5 +1,6 @@
-.vscode
 core/FCFS.c
 core/output
 a.exe
-tokens.txt
+PBL-Compiler.pro.user
+*.user
+*.pro.user
