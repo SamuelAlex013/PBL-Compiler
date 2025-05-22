@@ -1,20 +1,8 @@
+#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#define MAX_TOKEN_SIZE 100
-#define MAX_TOKENS 1000
-
-
-
-// Token structure
-typedef struct
-{
-  char type[20];   // e.g., "KEYWORD", "IDENTIFIER"
-  char value[100]; // the actual token (like "int", "main", "=")
-  int line;        // line number in source code
-} Token;
 
 Token tokens[MAX_TOKENS];
 int tokenCount = 0;
@@ -92,6 +80,25 @@ int analyze(const char *filename)
 
   while ((ch = fgetc(fp)) != EOF)
   {
+    // Handle preprocessor directives
+    if (ch == '#')
+    {
+      char directiveLine[MAX_TOKEN_SIZE];
+      int dIndex = 0;
+      directiveLine[dIndex++] = ch;
+
+      while ((ch = fgetc(fp)) != EOF && ch != '\n')
+      {
+        if (dIndex < MAX_TOKEN_SIZE - 1)
+          directiveLine[dIndex++] = ch;
+      }
+
+      directiveLine[dIndex] = '\0';
+      addToken("PREPROCESSOR", directiveLine);
+      lineNumber++;
+      continue;
+    }
+
     if (inComment)
     {
       if (ch == '*' && (ch = fgetc(fp)) == '/')
@@ -273,37 +280,4 @@ void printTokens(const char *outFile)
   printf("------------------------------\n");
 
   fclose(fp);
-}
-
-// Main Function
-
-int main() {
-    char filename[300];
-
-    printf("Enter full path to source code file (use quotes if it contains spaces):\n> ");
-    fgets(filename, sizeof(filename), stdin);
-
-    // Remove trailing newline
-    filename[strcspn(filename, "\n")] = '\0';
-
-    // If input starts and ends with quotes, remove both
-    int len = strlen(filename);
-    if (filename[0] == '"' && filename[len - 1] == '"') {
-        // Shift left by 1 and set null terminator at new end
-        memmove(filename, filename + 1, len - 2);
-        filename[len - 2] = '\0';  // not -1!
-    }
-
-    // Debug print
-    printf("Opening file: %s\n", filename);
-
-    if (!analyze(filename)) {
-        printf("Error: Could not open file %s\n", filename);
-        return 1;
-    }
-
-    printTokens("tokens.txt");
-
-    printf("\nTokens saved in tokens.txt\n");
-    return 0;
 }
