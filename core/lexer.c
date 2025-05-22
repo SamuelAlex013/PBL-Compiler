@@ -1738,15 +1738,14 @@ int main()
 #endif
 #line 75 "lexer.l"
 
-int main(int argc, char **argv)
+int main()
 {
-  if (argc != 2)
-  {
-    fprintf(stderr, "Usage: %s <source_file.c>\n", argv[0]);
-    return 1;
-  }
+  char filename[256];
 
-  FILE *fp = fopen(argv[1], "r");
+  printf("Enter file name: ");
+  scanf("%255s", filename);
+
+  FILE *fp = fopen(filename, "r");
   if (!fp)
   {
     perror("File error");

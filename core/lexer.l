@@ -74,14 +74,13 @@ WHITESPACE      [ \t\r]+
 
 %%
 
-int main(int argc, char **argv)
-{
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <source_file.c>\n", argv[0]);
-        return 1;
-    }
+int main() {
+    char filename[256];
 
-    FILE *fp = fopen(argv[1], "r");
+    printf("Enter file name: ");
+    scanf("%255s", filename);
+
+    FILE *fp = fopen(filename, "r");
     if (!fp) {
         perror("File error");
         return 1;
