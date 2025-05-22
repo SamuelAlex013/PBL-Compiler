@@ -6,7 +6,10 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-
+    
+    ui->tableWidget->setStyleSheet(
+        "QTableWidget::item:hover { background: transparent; }"
+    );
     QList<Token> tokens = parseTokensFromFile(QCoreApplication::applicationDirPath() + "/core/output/tokens.txt");
     qDebug() << "Loaded" << tokens.size() << "tokens.";
     loadTokensIntoTable(tokens);
