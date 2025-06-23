@@ -20,12 +20,12 @@ int keywordCount = sizeof(keywords) / sizeof(keywords[0]);
 
 // List of operators
 char *operators[] = {
-    "+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "++", "--", ":"};
+    "+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "++", "--", ":" ,"&"};
 int operatorCount = sizeof(operators) / sizeof(operators[0]);
 
 // Symbols (punctuation)
 char *symbols[] = {
-    "(", ")", "{", "}", "[", "]", ";", ","};
+    "(", ")", "{", "}", "[", "]", ";", ",", "'"};
 int symbolCount = sizeof(symbols) / sizeof(symbols[0]);
 
 // Helper functions
@@ -77,8 +77,7 @@ int analyze(const char *filename){
 
   while ((ch = fgetc(fp)) != EOF){
     // Handle preprocessor directives
-    if (ch == '#')
-    {
+    if (ch == '#'){
       char directiveLine[MAX_TOKEN_SIZE];
       int dIndex = 0;
       directiveLine[dIndex++] = ch;
@@ -93,26 +92,51 @@ int analyze(const char *filename){
       addToken("PREPROCESSOR", directiveLine);
       lineNumber++;
       continue;
+    } 
+
+    if (ch == '"') {
+      char strLiteral[MAX_TOKEN_SIZE];
+      int strIdx = 0;
+      strLiteral[strIdx++] = ch;
+
+      while ((ch = fgetc(fp)) != EOF && ch != '"') {
+          strLiteral[strIdx++] = ch;
+      }
+      strLiteral[strIdx++] = '"';
+      strLiteral[strIdx] = '\0';
+
+      addToken("STRING", strLiteral);
+      continue;
     }
 
-    if (inComment)
-    {
-      if (ch == '*' && (ch = fgetc(fp)) == '/')
-      {
+    if (inComment){
+      if (ch == '*' && (ch = fgetc(fp)) == '/'){
         inComment = 0;
       }
-      else if (ch == '\n')
-      {
+      else if (ch == '\n'){
         lineNumber++;
       }
       continue;
     }
 
-    if (ch == '/' && index == 0)
-    {
+    if (ch == '\'') {
+      char charLiteral[4];
+      charLiteral[0] = '\'';
+      charLiteral[1] = fgetc(fp);  
+      charLiteral[2] = fgetc(fp); 
+      charLiteral[3] = '\0';
+
+      if (charLiteral[2] != '\'') {
+         break;
+      }
+
+      addToken("CHAR", charLiteral);
+      continue;
+    }
+
+    if (ch == '/' && index == 0){
       char next = fgetc(fp);
-      if (next == '/')
-      {
+      if (next == '/'){
         while ((ch = fgetc(fp)) != EOF && ch != '\n')
           ;
         lineNumber++;
