@@ -59,9 +59,8 @@ void expect(const char *type, const char *value) {
 }
 
 void parseProgram() {
-    // Skip preprocessor directives
     while (current < tokenCount && strcmp(peek().type, "PREPROCESSOR") == 0) {
-        advance();  // Skip it
+        advance();
     }
 
     parseFunctionList();
@@ -75,19 +74,14 @@ void parseProgram() {
 
 void parseFunctionList() {
     while (current < tokenCount) {
-        // Check if function or variable declaration
         int backup = current;
 
         if (match("KEYWORD", NULL)) {
             if (match("IDENTIFIER", NULL)) {
                 if (match("SYMBOL", "(")) {
-                    // Function
                     current = backup;
                     parseFunction();
-
-                    
                 } else {
-                    // Global variable declaration
                     current = backup;
                     parseDeclaration();
                 }
@@ -107,10 +101,7 @@ void parseFunction() {
     parseParameterList();
     expect("SYMBOL", ")");
 
-    if (match("SYMBOL", ";")) {
-        // Function declaration (prototype)
-        return;
-    }
+    if (match("SYMBOL", ";")) return;
 
     expect("SYMBOL", "{");
     parseStatementList();
@@ -152,60 +143,59 @@ void parseStatement() {
             error("Unknown keyword in statement");
         }
     } else if (strcmp(peek().type, "IDENTIFIER") == 0) {
-        parseAssignment();
+        if (strcmp(peek().value, "printf") == 0) {
+            parsePrint();
+        } else {
+            parseAssignment();
+        }
     } else {
         error("Invalid start of statement");
     }
 }
 
 void parseDeclaration() {
-      // Consume possible storage/class/type qualifiers like 'extern', 'static', 'const'
     while (strcmp(peek().type, "KEYWORD") == 0 &&
            (strcmp(peek().value, "extern") == 0 ||
             strcmp(peek().value, "static") == 0 ||
             strcmp(peek().value, "const") == 0)) {
-        advance(); // skip qualifier
+        advance();
     }
 
-    // Now we expect the actual type: int, float, char, etc.
-    if (!(match("KEYWORD", "int") ||
-          match("KEYWORD", "float") ||
-          match("KEYWORD", "char") ||
-          match("KEYWORD", "double") ||
+    if (!(match("KEYWORD", "int") || match("KEYWORD", "float") ||
+          match("KEYWORD", "char") || match("KEYWORD", "double") ||
           match("KEYWORD", "void"))) {
         error("Expected type specifier like int, float, etc.");
     }
-   
+
     if (!match("IDENTIFIER", NULL)) error("Expected variable name");
 
-    // Handle array declaration like arr[10]
     if (match("SYMBOL", "[")) {
         if (!match("NUMBER", NULL)) error("Expected array size inside brackets");
         expect("SYMBOL", "]");
     }
 
     if (match("OPERATOR", "=")) {
-        parseExpression(); 
+        parseExpression();
     }
 
     expect("SYMBOL", ";");
 }
 
 void parseAssignment() {
-    advance(); // variable
+    advance();
     expect("OPERATOR", "=");
     parseExpression();
     expect("SYMBOL", ";");
 }
 
 void parseReturnStmt() {
-    advance(); // return
+    advance();
     parseExpression();
     expect("SYMBOL", ";");
 }
 
 void parseIfStmt() {
-    advance(); // if
+    advance();
     expect("SYMBOL", "(");
     parseExpression();
     expect("SYMBOL", ")");
@@ -220,68 +210,55 @@ void parseIfStmt() {
 }
 
 void parseWhileStmt() {
-    advance(); 
+    advance();
     expect("SYMBOL", "(");
     parseExpression();
     expect("SYMBOL", ")");
     expect("SYMBOL", "{");
     parseStatementList();
     expect("SYMBOL", "}");
-}
-
-void parsePrimaryExpression() {
-    if (match("IDENTIFIER", NULL)) {
-        if (match("SYMBOL", "[")) {
-            parseExpression(); 
-            expect("SYMBOL", "]");
-        }
-    } else if (match("NUMBER", NULL)) {
-        // do nothing
-    } else {
-        error("Expected identifier, number, or array access");
-    }
-    return;
-}
-
-void parseExpression() {
-    parsePrimaryExpression();
-    while (match("OPERATOR", NULL)) {
-        parsePrimaryExpression();
-    }
 }
 
 void parseForStmt() {
-    advance(); // for
+    advance(); 
     expect("SYMBOL", "(");
 
     if (strcmp(peek().type, "KEYWORD") == 0) {
-        parseDeclaration(); 
+        parseDeclaration();
     } else if (strcmp(peek().type, "IDENTIFIER") == 0) {
-        parseAssignment();  
+        parseAssignment();
+    } else if (strcmp(peek().value, ";") == 0) {
+        advance(); 
     } else {
-        error("Expected declaration or assignment in for loop initialization");
+        error("Expected declaration, assignment, or ';' in for-loop initialization");
     }
 
-    parseExpression();
+    if (strcmp(peek().value, ";") != 0) {
+        parseExpression();
+    }
     expect("SYMBOL", ";");
 
-    if (strcmp(peek().type, "IDENTIFIER") == 0) {
-        advance();
-
-        if (match("OPERATOR", "++") || match("OPERATOR", "--")) {
-            // do nothing
-        } else if (match("OPERATOR", "=")) {
-            parseExpression();
+    if (strcmp(peek().value, ")") != 0) {
+        if (strcmp(peek().type, "IDENTIFIER") == 0) {
+            advance(); // consume variable
+            if (match("OPERATOR", "++") || match("OPERATOR", "--")) {
+            } else if (match("OPERATOR", "=")) {
+                parseExpression();
+            } else {
+                error("Expected '++', '--' or '=' in for-loop update");
+            }
         } else {
-            error("Expected ++, -- or = in for-loop update");
+            error("Expected identifier in for-loop update");
         }
     }
 
     expect("SYMBOL", ")");
+
     expect("SYMBOL", "{");
     parseStatementList();
     expect("SYMBOL", "}");
 }
+
 
 void parsePrint() {
     match("IDENTIFIER", "printf");
@@ -292,7 +269,32 @@ void parsePrint() {
     expect("SYMBOL", ";");
 }
 
-// Main Fn
+void parsePrimaryExpression() {
+    if (match("IDENTIFIER", NULL)) {
+        if (match("SYMBOL", "[")) {
+            parseExpression();
+            expect("SYMBOL", "]");
+        } else if (match("SYMBOL", "(")) {
+            while (!match("SYMBOL", ")")) {
+                parseExpression();
+                match("SYMBOL", ",");
+            }
+        }
+    } else if (match("NUMBER", NULL)) {
+        // literal
+    } else if (match("STRING", NULL)) {
+        // string literal
+    } else {
+        error("Expected expression");
+    }
+}
+
+void parseExpression() {
+    parsePrimaryExpression();
+    while (match("OPERATOR", NULL)) {
+        parsePrimaryExpression();
+    }
+}
 
 int main() {
     char filename[300];
@@ -320,8 +322,7 @@ int main() {
     printf("\nTokens saved in tokens.txt\n");
 
     parseProgram();
-    printf("Parsing Complete");
+    printf("Parsing Complete\n");
 
     return 0;
 }
-// TO RUN : gcc parser.c lexer.c -o parser (Together)

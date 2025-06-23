@@ -8,14 +8,19 @@ Token tokens[MAX_TOKENS];
 int tokenCount = 0;
 int lineNumber = 1;
 
-// List of simple keywords (you can expand this)
 char *keywords[] = {
-    "int", "float", "return", "if", "else", "while", "for", "void", "char", "double", "long", "short", "bool"};
+    "auto", "bool", "break", "case", "char", "const", "continue", "default", "do",
+    "double", "else", "enum", "extern", "float", "for", "goto", "if", "inline", "int",
+    "long", "register", "restrict", "return", "short", "signed", "sizeof", "static",
+    "struct", "switch", "typedef", "union", "unsigned", "void", "volatile", "while", "_Alignas",
+    "_Alignof", "_Atomic", "_Bool", "_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert",
+    "_Thread_local"
+};
 int keywordCount = sizeof(keywords) / sizeof(keywords[0]);
 
 // List of operators
 char *operators[] = {
-    "+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "++", "--"};
+    "+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "++", "--", ":"};
 int operatorCount = sizeof(operators) / sizeof(operators[0]);
 
 // Symbols (punctuation)
@@ -24,8 +29,7 @@ char *symbols[] = {
 int symbolCount = sizeof(symbols) / sizeof(symbols[0]);
 
 // Helper functions
-int isKeyword(const char *word)
-{
+int isKeyword(const char *word){
   for (int i = 0; i < keywordCount; i++)
   {
     if (strcmp(word, keywords[i]) == 0)
@@ -34,20 +38,16 @@ int isKeyword(const char *word)
   return 0;
 }
 
-int isOperator(const char *word)
-{
-  for (int i = 0; i < operatorCount; i++)
-  {
+int isOperator(const char *word){
+  for (int i = 0; i < operatorCount; i++){
     if (strcmp(word, operators[i]) == 0)
       return 1;
   }
   return 0;
 }
 
-int isSymbol(char ch)
-{
-  for (int i = 0; i < symbolCount; i++)
-  {
+int isSymbol(char ch){
+  for (int i = 0; i < symbolCount; i++){
     if (symbols[i][0] == ch && strlen(symbols[i]) == 1)
       return 1;
   }
@@ -55,8 +55,7 @@ int isSymbol(char ch)
 }
 
 // Add a token to our token list
-void addToken(const char *type, const char *value)
-{
+void addToken(const char *type, const char *value){
   strcpy(tokens[tokenCount].type, type);
   strcpy(tokens[tokenCount].value, value);
   tokens[tokenCount].line = lineNumber;
@@ -64,11 +63,9 @@ void addToken(const char *type, const char *value)
 }
 
 // Lexer Logic
-int analyze(const char *filename)
-{
+int analyze(const char *filename){
   FILE *fp = fopen(filename, "r");
-  if (!fp)
-  {
+  if (!fp){
     printf("Error: Could not open file %s\n", filename);
     return 0;
   }
@@ -78,8 +75,7 @@ int analyze(const char *filename)
   lineNumber = 1;
   int inComment = 0;
 
-  while ((ch = fgetc(fp)) != EOF)
-  {
+  while ((ch = fgetc(fp)) != EOF){
     // Handle preprocessor directives
     if (ch == '#')
     {
