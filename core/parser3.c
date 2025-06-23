@@ -145,6 +145,10 @@ void parseStatement() {
             parsePrint();
         } else if (strcmp(peek().value, "switch") == 0) {
             parseSwitchStmt();
+        } else if (strcmp(peek().value, "break") == 0) {
+            advance();
+            expect("SYMBOL", ";");
+            printf("Parsed break statement at line %d\n", peek().line);
         } else {
             error("Unknown keyword in statement");
         }
@@ -235,14 +239,9 @@ void parseSwitchStmt() {
     while (!match("SYMBOL", "}")) {
         if (match("KEYWORD", "case")) {
             if (!match("NUMBER", NULL)) error("Expected number after case");
-            expect("OPERATOR", ":");
-            parseStatementList(); 
+            expect("OPERATOR", ":"); 
         } else if (match("KEYWORD", "default")) {
             expect("OPERATOR", ":");
-            parseStatementList(); 
-        } else if (strcmp(peek().value, "break") == 0) {
-            advance();
-            expect("SYMBOL", ";");
         } else {
             parseStatement();
         }
